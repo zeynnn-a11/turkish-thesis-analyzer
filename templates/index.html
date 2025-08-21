@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 Türkçe Tez Özetleyici</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            color: #5a67d8;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .drop-zone {
+            border: 3px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #5a67d8;
+            background-color: #f7fafc;
+        }
+        
+        .drop-zone.dragover {
+            background-color: #e6fffa;
+            border-color: #38b2ac;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+        
+        .textarea:focus {
+            outline: none;
+            border-color: #5a67d8;
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+        
+        .result-section.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #5a67d8;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #5a67d8;
+        }
+        
+        .keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .keyword {
+            background: #e6fffa;
+            color: #234e52;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid #81e6d9;
+        }
+        
+        /* YÖK TEZ ARAMA STİLLERİ */
+        .yok-search-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            color: white;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .yok-search-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+        
+        .yok-search-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        
+        .yok-search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1em;
+            backdrop-filter: blur(10px);
+        }
+        
+        .yok-search-input::placeholder {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .yok-search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+        
+        .yok-select {
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1em;
+            backdrop-filter: blur(10px);
+            min-width: 120px;
+        }
+        
+        .yok-select option {
+            background: #667eea;
+            color: white;
+        }
+        
+        .yok-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .yok-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .yok-btn-secondary {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+        }
+        
+        .yok-btn-secondary:hover {
+            transform: scale(1.05);
+        }
+        
+        .yok-results {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .yok-results h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        
+        .tez-item {
+            transition: all 0.3s ease;
+        }
+        
+        .tez-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Gelişmiş Arama Modal Stilleri */
+        .yok-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+        
+        .yok-modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .yok-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .yok-modal-title {
+            color: #667eea;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .yok-close {
+            color: #999;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .yok-close:hover {
+            color: #667eea;
+        }
+        
+        .yok-form-group {
+            margin-bottom: 20px;
+        }
+        
+        .yok-form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+        
+        .yok-form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+        
+        .yok-form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .yok-form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .yok-form-row .yok-form-group {
+            flex: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .yok-search-row {
+                flex-direction: column;
+            }
+            
+            .yok-modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 20px;
+            }
+            
+            .yok-form-row {
+                flex-direction: column;
+            }
+        }
+        
+        .export-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .alert.success {
+            background: #f0fff4;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .alert.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Türkçe Tez Özetleyici</h1>
+            <p>PDF dosyalarınızı yükleyin ve anında Türkçe özetlerini alın!</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- PDF Yükleme Bölümü -->
+            <div class="card">
+                <h2>📄 PDF Dosyası Yükle</h2>
+                <div class="drop-zone" id="dropZone">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">📁</div>
+                    <p><strong>PDF dosyanızı buraya sürükleyin</strong></p>
+                    <p>veya</p>
+                    <button class="btn" onclick="document.getElementById('fileInput').click()">
+                        Dosya Seç
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" accept=".pdf">
+                </div>
+                
+                <div id="fileInfo" style="display: none;">
+                    <p><strong>Seçilen dosya:</strong> <span id="fileName"></span></p>
+                    <p><strong>Boyut:</strong> <span id="fileSize"></span></p>
+                    <button class="btn" id="uploadBtn">📤 Yükle ve Özetle</button>
+                </div>
+            </div>
+            
+            <!-- Metin Özetleme Bölümü -->
+            <div class="card">
+                <h2>📝 Metin Özetleme</h2>
+                <textarea class="textarea" id="textInput" placeholder="Özetlemek istediğiniz Türkçe metni buraya yazın..."></textarea>
+                <button class="btn" id="summarizeBtn">✨ Özetle</button>
+                <button class="btn" id="clearBtn" style="background: #e53e3e;">🗑️ Temizle</button>
+            </div>
+        </div>
+        
+        <!-- YÖK Tez Arama Bölümü -->
+        <div class="card" style="margin-top: 30px;">
+            <h2>🔍 YÖK Tez Arama</h2>
+            <p style="color: #666; margin-bottom: 20px;">YÖK Tez Merkezi'nden tez arayın ve özetleyin!</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 15px; margin-bottom: 15px;">
+                <input type="text" id="yokSearchInput" class="textarea" style="height: 50px; padding: 15px;" placeholder="Anahtar kelime girin (örn: makine öğrenmesi, yapay zeka...)">
+                <select id="yokTezTuru" style="padding: 15px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                    <option value="tum">Tüm Tezler</option>
+                    <option value="yuksek_lisans">Yüksek Lisans</option>
+                    <option value="doktora">Doktora</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn" id="yokSearchBtn">🔍 YÖK Tez'de Ara</button>
+                <button class="btn" id="yokAdvancedBtn" style="background: #805ad5;">⚙️ Gelişmiş Arama</button>
+            </div>
+            
+            <!-- YÖK Arama Sonuçları -->
+            <div id="yokResults" style="display: none; margin-top: 20px;">
+                <h3>📋 Bulunan Tezler:</h3>
+                <div id="yokTezList"></div>
+                <div style="margin-top: 15px;">
+                    <button class="btn" id="yokAnalyzeBtn" style="background: #38a169;">📊 Seçili Tezi Analiz Et</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gelişmiş YÖK Arama Modal -->
+        <div id="yokAdvancedModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                <h3>⚙️ YÖK Tez Gelişmiş Arama</h3>
+                <div style="display: grid; gap: 15px; margin: 20px 0;">
+                    <div>
+                        <label>Tez Başlığı:</label>
+                        <input type="text" id="yokBaslik" class="textarea" style="height: 40px;" placeholder="Tez başlığında aranacak kelimeler">
+                    </div>
+                    <div>
+                        <label>Yazar Adı:</label>
+                        <input type="text" id="yokYazar" class="textarea" style="height: 40px;" placeholder="Yazar adı">
+                    </div>
+                    <div>
+                        <label>Üniversite:</label>
+                        <input type="text" id="yokUniversite" class="textarea" style="height: 40px;" placeholder="Üniversite adı">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label>Başlangıç Yılı:</label>
+                            <input type="number" id="yokYilBaslangic" class="textarea" style="height: 40px;" placeholder="2020" min="1990" max="2024">
+                        </div>
+                        <div>
+                            <label>Bitiş Yılı:</label>
+                            <input type="number" id="yokYilBitis" class="textarea" style="height: 40px;" placeholder="2024" min="1990" max="2024">
+                        </div>
+                    </div>
+                    <div>
+                        <label>Tez Türü:</label>
+                        <select id="yokGelismisTur" style="width: 100%; padding: 15px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                            <option value="">Seçiniz</option>
+                            <option value="YL">Yüksek Lisans</option>
+                            <option value="DR">Doktora</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <button class="btn" id="performAdvancedSearch">🔍 Gelişmiş Arama Yap</button>
+                    <button class="btn" id="closeAdvancedSearch" style="background: #e53e3e;">❌ Kapat</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Yükleme Animasyonu -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>İşleniyor... Lütfen bekleyin.</p>
+        </div>
+        
+        <!-- Uyarı Mesajları -->
+        <div class="alert" id="alert">
+            <span id="alertMessage"></span>
+        </div>
+        
+        <!-- Sonuç Bölümü -->
+        <div class="result-section" id="resultSection">
+            <h2>📊 Özetleme Sonuçları</h2>
+            
+            <!-- İstatistikler -->
+            <div class="stats" id="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="originalLength">-</div>
+                    <div>Orijinal Uzunluk</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="summaryLength">-</div>
+                    <div>Özet Uzunluk</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="compressionRatio">-</div>
+                    <div>Sıkıştırma Oranı</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="wordCount">-</div>
+                    <div>Kelime Sayısı</div>
+                </div>
+            </div>
+            
+            <!-- Özet -->
+            <div style="margin: 20px 0;">
+                <h3>📋 Özet:</h3>
+                <div id="summaryText" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px; line-height: 1.6;"></div>
+            </div>
+            
+            <!-- Anahtar Kelimeler -->
+            <div style="margin: 20px 0;">
+                <h3>🔑 Anahtar Kelimeler:</h3>
+                <div class="keywords" id="keywords"></div>
+            </div>
+            
+            <!-- Export Butonları -->
+            <div class="export-buttons">
+                <button class="btn export-btn" id="exportTxt">📄 TXT İndir</button>
+                <button class="btn export-btn" id="exportJson">� JSON İndir</button>
+                <button class="btn export-btn" id="compareBtn">🔍 Karşılaştır</button>
+                <button class="btn export-btn" id="shareBtn">🔗 Paylaş</button>
+            </div>
+            
+            <!-- Gelişmiş Özellikler -->
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <h4>� Gelişmiş Özellikler:</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                    <button class="btn" id="batchProcessBtn" style="background: #38a169;">📦 Batch İşleme</button>
+                    <button class="btn" id="advancedStatsBtn" style="background: #3182ce;">📈 Detaylı İstatistik</button>
+                    <button class="btn" id="saveToCloudBtn" style="background: #805ad5;">☁️ Bulut Kaydet</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Karşılaştırma Modal -->
+        <div id="compareModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 800px; max-height: 80%; overflow-y: auto;">
+                <h3>� Metin Karşılaştırma</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                    <div>
+                        <label>İlk Metin:</label>
+                        <textarea id="compareText1" class="textarea" style="height: 150px;" placeholder="İlk metni buraya yazın..."></textarea>
+                    </div>
+                    <div>
+                        <label>İkinci Metin:</label>
+                        <textarea id="compareText2" class="textarea" style="height: 150px;" placeholder="İkinci metni buraya yazın..."></textarea>
+                    </div>
+                </div>
+                <div id="comparisonResult" style="margin: 20px 0; display: none;"></div>
+                <div style="text-align: center;">
+                    <button class="btn" id="performCompare">🔍 Karşılaştır</button>
+                    <button class="btn" id="closeCompare" style="background: #e53e3e;">❌ Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global değişkenler
+        let currentResult = null;
+        
+        // API Base URL
+        const API_BASE = '';
+        
+        // DOM Elementleri
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const textInput = document.getElementById('textInput');
+        const summarizeBtn = document.getElementById('summarizeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loading = document.getElementById('loading');
+        const alert = document.getElementById('alert');
+        const alertMessage = document.getElementById('alertMessage');
+        const resultSection = document.getElementById('resultSection');
+        
+        // Drag & Drop İşlemleri
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                fileInput.files = files;
+                handleFileSelect();
+            } else {
+                showAlert('Lütfen sadece PDF dosyası seçin!', 'error');
+            }
+        });
+        
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (file) {
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileInfo.style.display = 'block';
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // PDF Yükleme
+        uploadBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                showAlert('Lütfen bir PDF dosyası seçin!', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('dosya', file);
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/pdf-yukle/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.basarili) {
+                    currentResult = result;
+                    displayResult(result);
+                    showAlert('PDF başarıyla özetlendi!', 'success');
+                } else {
+                    showAlert(result.detail || 'Bir hata oluştu!', 'error');
+                }
+            } catch (error) {
+                showAlert('Bağlantı hatası: ' + error.message, 'error');
+            }
+            
+            showLoading(false);
+        });
+        
+        // Metin Özetleme
+        summarizeBtn.addEventListener('click', async () => {
+            const text = textInput.value.trim();
+            if (!text) {
+                showAlert('Lütfen özetlemek istediğiniz metni girin!', 'error');
+                return;
+            }
+            
+            if (text.length < 50) {
+                showAlert('Metin en az 50 karakter olmalıdır!', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/metin-ozetle/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ metin: text })
+                });
+                
+                const result = await response.json();
+                
+                if (result.basarili) {
+                    currentResult = result;
+                    displayResult(result);
+                    showAlert('Metin başarıyla özetlendi!', 'success');
+                } else {
+                    showAlert(result.detail || 'Bir hata oluştu!', 'error');
+                }
+            } catch (error) {
+                showAlert('Bağlantı hatası: ' + error.message, 'error');
+            }
+            
+            showLoading(false);
+        });
+        
+        // Temizle
+        clearBtn.addEventListener('click', () => {
+            textInput.value = '';
+            resultSection.classList.remove('show');
+            hideAlert();
+        });
+        
+        // Sonuçları Göster
+        function displayResult(result) {
+            const stats = result.istatistikler;
+            
+            document.getElementById('originalLength').textContent = stats.orijinal_uzunluk.toLocaleString() + ' karakter';
+            document.getElementById('summaryLength').textContent = stats.ozet_uzunluk.toLocaleString() + ' karakter';
+            document.getElementById('compressionRatio').textContent = '%' + stats.sikistirma_orani;
+            document.getElementById('wordCount').textContent = stats.kelime_sayisi.toLocaleString() + ' kelime';
+            
+            document.getElementById('summaryText').textContent = result.ozet;
+            
+            const keywordsContainer = document.getElementById('keywords');
+            keywordsContainer.innerHTML = '';
+            result.anahtar_kelimeler.forEach(keyword => {
+                const span = document.createElement('span');
+                span.className = 'keyword';
+                span.textContent = keyword;
+                keywordsContainer.appendChild(span);
+            });
+            
+            resultSection.classList.add('show');
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Yükleme Animasyonu
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+            uploadBtn.disabled = show;
+            summarizeBtn.disabled = show;
+        }
+        
+        // Uyarı Mesajları
+        function showAlert(message, type) {
+            alertMessage.textContent = message;
+            alert.className = `alert ${type} show`;
+            
+            setTimeout(() => {
+                hideAlert();
+            }, 5000);
+        }
+        
+        function hideAlert() {
+            alert.classList.remove('show');
+        }
+        
+        // Export İşlemleri
+        document.getElementById('exportTxt').addEventListener('click', async () => {
+            if (!currentResult) return;
+            
+            try {
+                const response = await fetch('/export-txt/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentResult)
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    downloadBlob(blob, 'tez-ozeti.txt');
+                    showAlert('TXT dosyası başarıyla indirildi!', 'success');
+                } else {
+                    showAlert('TXT dışarı aktarma hatası!', 'error');
+                }
+            } catch (error) {
+                showAlert('Export hatası: ' + error.message, 'error');
+            }
+        });
+        
+        document.getElementById('exportJson').addEventListener('click', async () => {
+            if (!currentResult) return;
+            
+            try {
+                const response = await fetch('/export-json/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentResult)
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    downloadBlob(blob, 'tez-ozeti.json');
+                    showAlert('JSON dosyası başarıyla indirildi!', 'success');
+                } else {
+                    showAlert('JSON dışarı aktarma hatası!', 'error');
+                }
+            } catch (error) {
+                showAlert('Dışarı aktarma hatası: ' + error.message, 'error');
+            }
+        });
+        
+        // Gelişmiş Özellikler
+        document.getElementById('batchProcessBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/batch-process/');
+                const info = await response.json();
+                
+                let message = `📦 Toplu İşleme Bilgileri:\n\n`;
+                message += `• Desteklenen Biçimler: ${info.desteklenen_biçimler.join(', ')}\n`;
+                message += `• En Fazla Dosya: ${info.en_fazla_dosya_sayısı}\n`;
+                message += `• En Fazla Boyut: ${info.en_fazla_dosya_boyutu}\n`;
+                message += `• Tahmini Süre: ${info.tahmini_işlem_süresi}\n\n`;
+                message += `⚠️ Durum: ${info.durum}`;
+                
+                alert(message);
+            } catch (error) {
+                showAlert('Bilgi alınamadı: ' + error.message, 'error');
+            }
+        });
+        
+        document.getElementById('advancedStatsBtn').addEventListener('click', () => {
+            if (!currentResult) {
+                showAlert('Önce bir metin özetleyin!', 'error');
+                return;
+            }
+            
+            const stats = currentResult.istatistikler;
+            const readingTime = Math.ceil(stats.kelime_sayisi / 200); // Dakika cinsinden
+            const complexity = stats.ozet_uzunluk / stats.orijinal_uzunluk;
+            
+            let message = `📈 Detaylı İstatistikler:\n\n`;
+            message += `📖 Okuma Süresi: ~${readingTime} dakika\n`;
+            message += `🎯 Karmaşıklık: ${complexity < 0.3 ? 'Basit' : complexity < 0.6 ? 'Orta' : 'Karmaşık'}\n`;
+            message += `📊 Sıkıştırma Kalitesi: ${stats.sikistirma_orani > 70 ? 'Mükemmel' : stats.sikistirma_orani > 50 ? 'İyi' : 'Orta'}\n`;
+            message += `🔤 Ortalama Kelime Uzunluğu: ${(stats.ozet_uzunluk / stats.kelime_sayisi).toFixed(1)} karakter\n`;
+            
+            alert(message);
+        });
+        
+        document.getElementById('saveToCloudBtn').addEventListener('click', () => {
+            showAlert('Bulut kaydetme özelliği yakında gelecek!', 'error');
+        });
+        
+        // Karşılaştırma Modal
+        document.getElementById('compareBtn').addEventListener('click', () => {
+            document.getElementById('compareModal').style.display = 'block';
+        });
+        
+        document.getElementById('closeCompare').addEventListener('click', () => {
+            document.getElementById('compareModal').style.display = 'none';
+        });
+        
+        document.getElementById('performCompare').addEventListener('click', async () => {
+            const text1 = document.getElementById('compareText1').value.trim();
+            const text2 = document.getElementById('compareText2').value.trim();
+            
+            if (!text1 || !text2) {
+                showAlert('İki metin de gereklidir!', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/compare-texts/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ metin1: text1, metin2: text2 })
+                });
+                
+                const result = await response.json();
+                
+                const resultDiv = document.getElementById('comparisonResult');
+                resultDiv.innerHTML = `
+                    <h4>🔍 Karşılaştırma Sonuçları:</h4>
+                    <div class="stats" style="margin: 15px 0;">
+                        <div class="stat-item">
+                            <div class="stat-value">${result.benzerlik_orani}%</div>
+                            <div>Benzerlik Oranı</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${result.ortak_kelime_sayisi}</div>
+                            <div>Ortak Kelime</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${result.metin1_kelime_sayisi}</div>
+                            <div>1. Metin Kelime</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${result.metin2_kelime_sayisi}</div>
+                            <div>2. Metin Kelime</div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>Ortak Kelimeler:</strong>
+                        <div class="keywords">
+                            ${result.ortak_kelimeler.map(kelime => `<span class="keyword">${kelime}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                showAlert('Karşılaştırma hatası: ' + error.message, 'error');
+            }
+            
+            showLoading(false);
+        });
+        
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            if (!currentResult) return;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Tez Özeti',
+                    text: currentResult.ozet
+                });
+            } else {
+                navigator.clipboard.writeText(currentResult.ozet);
+                showAlert('Özet panoya kopyalandı!', 'success');
+            }
+        });
+        
+        function downloadFile(content, filename, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            downloadBlob(blob, filename);
+        }
+        
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // YÖK TEZ ARAMA ÖZELLİKLERİ
+        
+        let yokAramaSonuclari = [];
+        let secilenTezIndeksi = 0;
+        
+        // YÖK Tez Basit Arama
+        document.getElementById('yokSearchBtn').addEventListener('click', async () => {
+            const aramaKelimesi = document.getElementById('yokSearchInput').value.trim();
+            const tezTuru = document.getElementById('yokTezTuru').value;
+            
+            if (!aramaKelimesi) {
+                showAlert('Lütfen anahtar kelime girin!', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`/yok-tez-ara/?anahtar_kelime=${encodeURIComponent(aramaKelimesi)}&sayfa=1&tur=${tezTuru}`);
+                const result = await response.json();
+                
+                if (result.basarili) {
+                    yokAramaSonuclari = result.tezler || [];
+                    displayYokResults(result);
+                    showAlert(`${result.bulunan_tez_sayisi} tez bulundu!`, 'success');
+                } else {
+                    showAlert('YÖK Tez aramasında hata oluştu!', 'error');
+                }
+            } catch (error) {
+                showAlert('YÖK Tez bağlantı hatası: ' + error.message, 'error');
+            }
+            
+            showLoading(false);
+        });
+        
+        // YÖK Gelişmiş Arama Modal
+        document.getElementById('yokAdvancedBtn').addEventListener('click', () => {
+            document.getElementById('yokAdvancedModal').style.display = 'block';
+        });
+        
+        document.getElementById('closeAdvancedSearch').addEventListener('click', () => {
+            document.getElementById('yokAdvancedModal').style.display = 'none';
+        });
+        
+        // Gelişmiş Arama
+        document.getElementById('performAdvancedSearch').addEventListener('click', async () => {
+            const gelismisArama = {
+                baslik: document.getElementById('yokBaslik').value.trim(),
+                yazar: document.getElementById('yokYazar').value.trim(),
+                universite: document.getElementById('yokUniversite').value.trim(),
+                yil_baslangic: document.getElementById('yokYilBaslangic').value,
+                yil_bitis: document.getElementById('yokYilBitis').value,
+                tur: document.getElementById('yokGelismisTur').value
+            };
+            
+            if (!gelismisArama.baslik && !gelismisArama.yazar && !gelismisArama.universite) {
+                showAlert('En az bir arama kriteri girin!', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            document.getElementById('yokAdvancedModal').style.display = 'none';
+            
+            try {
+                const response = await fetch('/yok-gelismis-arama/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(gelismisArama)
+                });
+                
+                const result = await response.json();
+                
+                if (result.basarili) {
+                    yokAramaSonuclari = result.bulunan_tezler || [];
+                    displayYokAdvancedResults(result);
+                    showAlert(`Gelişmiş arama ile ${result.toplam} tez bulundu!`, 'success');
+                } else {
+                    showAlert('Gelişmiş aramada hata: ' + (result.hata || 'Bilinmeyen hata'), 'error');
+                }
+            } catch (error) {
+                showAlert('Gelişmiş arama hatası: ' + error.message, 'error');
+            }
+            
+            showLoading(false);
+        });
+        
+        // YÖK Tez Analiz Et
+        document.getElementById('yokAnalyzeBtn').addEventListener('click', async () => {
+            if (yokAramaSonuclari.length === 0) {
+                showAlert('Önce tez araması yapın!', 'error');
+                return;
+            }
+            
+            const anahtarKelime = document.getElementById('yokSearchInput').value.trim();
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/yok-tez-ozet/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        anahtar_kelime: anahtarKelime,
+                        tez_indeksi: secilenTezIndeksi
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.basarili) {
+                    displayYokAnalysis(result);
+                    showAlert('Tez analizi tamamlandı!', 'success');
+                } else {
+                    showAlert('Tez analizi hatası!', 'error');
+                }
+            } catch (error) {
+                showAlert('Analiz hatası: ' + error.message, 'error');
+            }
+            
+            showLoading(false);
+        });
+        
+        // YÖK Sonuçları Göster
+        function displayYokResults(result) {
+            const resultsDiv = document.getElementById('yokResults');
+            const tezListDiv = document.getElementById('yokTezList');
+            
+            tezListDiv.innerHTML = '';
+            
+            if (result.tezler && result.tezler.length > 0) {
+                result.tezler.forEach((tez, index) => {
+                    const tezDiv = document.createElement('div');
+                    tezDiv.className = 'tez-item';
+                    tezDiv.style.cssText = `
+                        border: 2px solid #e2e8f0;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin: 10px 0;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        background: ${index === secilenTezIndeksi ? '#e6fffa' : 'white'};
+                    `;
+                    
+                    tezDiv.innerHTML = `
+                        <h4 style="color: #5a67d8; margin-bottom: 8px;">${tez.baslik || 'Başlık Belirtilmemiş'}</h4>
+                        <p><strong>Yazar:</strong> ${tez.yazar || 'Belirtilmemiş'}</p>
+                        <p><strong>Üniversite:</strong> ${tez.universite || 'Belirtilmemiş'}</p>
+                        <p><strong>Tür:</strong> ${tez.tur || 'Belirtilmemiş'} | <strong>Yıl:</strong> ${tez.yil || 'Belirtilmemiş'}</p>
+                        ${index === secilenTezIndeksi ? '<div style="color: #38a169; font-weight: bold;">✓ Seçili</div>' : ''}
+                    `;
+                    
+                    tezDiv.addEventListener('click', () => {
+                        secilenTezIndeksi = index;
+                        displayYokResults(result); // Yeniden çiz
+                    });
+                    
+                    tezDiv.addEventListener('mouseenter', () => {
+                        if (index !== secilenTezIndeksi) {
+                            tezDiv.style.background = '#f8f9fa';
+                            tezDiv.style.borderColor = '#5a67d8';
+                        }
+                    });
+                    
+                    tezDiv.addEventListener('mouseleave', () => {
+                        if (index !== secilenTezIndeksi) {
+                            tezDiv.style.background = 'white';
+                            tezDiv.style.borderColor = '#e2e8f0';
+                        }
+                    });
+                    
+                    tezListDiv.appendChild(tezDiv);
+                });
+                
+                resultsDiv.style.display = 'block';
+            } else {
+                tezListDiv.innerHTML = '<p style="color: #666;">Tez bulunamadı.</p>';
+                resultsDiv.style.display = 'block';
+            }
+        }
+        
+        // Gelişmiş Arama Sonuçları
+        function displayYokAdvancedResults(result) {
+            const fakeResult = {
+                tezler: result.bulunan_tezler,
+                bulunan_tez_sayisi: result.toplam
+            };
+            displayYokResults(fakeResult);
+        }
+        
+        // YÖK Analiz Sonuçları
+        function displayYokAnalysis(result) {
+            const analysisHtml = `
+                <div style="background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 8px; padding: 20px; margin-top: 20px;">
+                    <h3 style="color: #22543d;">📊 YÖK Tez Analizi</h3>
+                    
+                    <div style="margin: 15px 0;">
+                        <h4>📚 Tez Bilgileri:</h4>
+                        <div style="background: white; padding: 15px; border-radius: 6px; margin: 10px 0;">
+                            <strong>${result.tez_bilgileri.baslik}</strong><br>
+                            <em>Yazar: ${result.tez_bilgileri.yazar} | ${result.tez_bilgileri.tur} | ${result.tez_bilgileri.yil}</em><br>
+                            <small>Üniversite: ${result.tez_bilgileri.universite}</small>
+                        </div>
+                    </div>
+                    
+                    ${result.ozet_analizi.kisa_ozet ? `
+                    <div style="margin: 15px 0;">
+                        <h4>📝 Özet:</h4>
+                        <div style="background: white; padding: 15px; border-radius: 6px;">
+                            ${result.ozet_analizi.kisa_ozet}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${result.ozet_analizi.anahtar_kelimeler && result.ozet_analizi.anahtar_kelimeler.length > 0 ? `
+                    <div style="margin: 15px 0;">
+                        <h4>🔑 Anahtar Kelimeler:</h4>
+                        <div class="keywords">
+                            ${result.ozet_analizi.anahtar_kelimeler.map(kelime => `<span class="keyword">${kelime}</span>`).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
+                        <strong>Analiz Durumu:</strong> ${result.ozet_analizi.durum}<br>
+                        <strong>Analiz Zamanı:</strong> ${result.zaman}
+                    </div>
+                </div>
+            `;
+            
+            // Sonuç bölümünün altına ekle
+            const resultSection = document.getElementById('resultSection');
+            if (resultSection.querySelector('.yok-analysis')) {
+                resultSection.querySelector('.yok-analysis').innerHTML = analysisHtml;
+            } else {
+                const analysisDiv = document.createElement('div');
+                analysisDiv.className = 'yok-analysis';
+                analysisDiv.innerHTML = analysisHtml;
+                resultSection.appendChild(analysisDiv);
+            }
+            
+            resultSection.classList.add('show');
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Sayfa yüklendiğinde konsola bilgi yaz
+        window.addEventListener('load', async () => {
+            console.log('🎓 Türkçe Tez Özetleyici yüklendi!');
+            console.log('📍 API Base URL:', window.location.origin);
+            console.log('🔍 YÖK Tez entegrasyonu aktif!');
+        });
+    </script>
+</body>
+</html>
